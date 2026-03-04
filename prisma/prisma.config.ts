@@ -1,29 +1,18 @@
-import fs from "node:fs";
 import path from "node:path";
-import type { PrismaConfig } from "prisma";
+import { defineConfig } from "prisma/config";
+import { loadEnvFile } from "node:process";
 
-// Load .env manually since Prisma CLI doesn't auto-load it
-function loadEnvUrl(): string {
-  const root = path.resolve(__dirname, "..");
-  for (const file of [".env.local", ".env"]) {
-    const envPath = path.join(root, file);
-    if (fs.existsSync(envPath)) {
-      const match = fs.readFileSync(envPath, "utf-8").match(/^DATABASE_URL=(.+)$/m);
-      if (match) return match[1].trim();
-    }
-  }
-  return process.env.DATABASE_URL!;
-}
+// Load .env.local first, then .env as fallback
+try { loadEnvFile(path.resolve(__dirname, "..", ".env.local")); } catch {}
+try { loadEnvFile(path.resolve(__dirname, "..", ".env")); } catch {}
 
-const url = loadEnvUrl();
-
-export default {
-  earlyAccess: true,
+export default defineConfig({
   schema: path.join(__dirname, "schema.prisma"),
-  datasource: { url },
-  migrate: {
-    async development() {
-      return { url };
-    },
+  migrations: {
+    path: path.join(__dirname, "migrations"),
+    seed: "tsx prisma/seed.ts",
   },
-} as PrismaConfig;
+  datasource: {
+    url: process.env.DATABASE_URL!,
+  },
+});
