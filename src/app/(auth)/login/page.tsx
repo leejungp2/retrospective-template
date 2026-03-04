@@ -1,8 +1,29 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { useState } from "react";
 
 export default function LoginPage() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleTestLogin() {
+    setLoading(true);
+    setError("");
+    const res = await signIn("test-credentials", {
+      email: "test@test.com",
+      password: "test1234",
+      callbackUrl: "/dashboard",
+      redirect: false,
+    });
+    if (res?.error) {
+      setError("로그인 실패. DB 연결을 확인해주세요.");
+      setLoading(false);
+    } else if (res?.url) {
+      window.location.href = res.url;
+    }
+  }
+
   return (
     <div className="w-full max-w-sm space-y-6">
       <div className="text-center space-y-2">
@@ -10,6 +31,35 @@ export default function LoginPage() {
         <p className="text-gray-500 text-sm">
           로그인하고 오늘의 회고를 시작하세요
         </p>
+      </div>
+
+      {/* 테스트 로그인 */}
+      <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 space-y-3">
+        <p className="text-xs font-medium text-gray-500 text-center">
+          개발 테스트용 계정
+        </p>
+        <div className="text-xs text-gray-400 text-center space-y-0.5">
+          <p>test@test.com / test1234</p>
+        </div>
+        <button
+          onClick={handleTestLogin}
+          disabled={loading}
+          className="w-full rounded-lg bg-gray-800 px-4 py-3 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition-colors min-h-[44px]"
+        >
+          {loading ? "로그인 중..." : "테스트 계정으로 로그인"}
+        </button>
+        {error && (
+          <p className="text-xs text-red-500 text-center">{error}</p>
+        )}
+      </div>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-xs text-gray-400">
+          <span className="bg-white px-2">또는</span>
+        </div>
       </div>
 
       <div className="space-y-3">
